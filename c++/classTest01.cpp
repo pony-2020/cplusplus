@@ -36,6 +36,7 @@ class AA
 
 int roleStage(){
 	
+	cout << "hello world " << endl;
 	AA a1(5);
 	AA a2(a1);
 	AA a3 = 10 ;
