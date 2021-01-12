@@ -49,6 +49,7 @@ int roleStage(){
 
 int main(){
 	
-	int ret = roleStage();
+	cout << "hello world!"<< endl;
 	return 0;
+
 }
