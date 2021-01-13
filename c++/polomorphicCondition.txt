@@ -1,0 +1,7 @@
+there are three main conditions to use polomorphic 
+
+one succeed 
+
+two virtual function
+
+three parent class pointer points child class object 
