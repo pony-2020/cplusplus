@@ -3,11 +3,8 @@
 using namespace std;
 
 int main(){
-	int a ; 
-	cin >> a ;
-	while(1){
-		;
-	}
 
+	int a = 10;
+	cout << a << endl;
 	return 0;
 }
