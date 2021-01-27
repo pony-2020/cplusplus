@@ -1,0 +1,1 @@
+/home/pony/Desktop/cplusplus/gdb/a.out
