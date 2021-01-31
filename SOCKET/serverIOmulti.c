@@ -9,9 +9,12 @@ void sig_child_handler(int signo){
 
 void client_data_handle(void*fd){
 
+// #define SERV_RESP_STR "Server"
+
 	int newfd = *(int*)fd;
-	printf("Handler thread : newfd = %d\n",newfd);
+	printf("Handler process : newfd = %d\n",newfd);
 	int ret = -1;
+	char responsebuf[BUFSIZE+10];
 	char buf[BUFSIZE];
 	while(1){
 
@@ -25,7 +28,16 @@ void client_data_handle(void*fd){
 		}
 		if(!ret)break;// client is colsed
 		printf("Rec data is %s\n",buf);
-		if(!strncasecmp(buf,QUIT_STR,strlen(QUIT_STR))){
+
+		bzero(responsebuf,BUFSIZE+10);
+		strncpy(responsebuf,SERV_RESP_STR,strlen(SERV_RESP_STR));
+		strcat(responsebuf,buf);
+		do{	
+			ret = write(newfd,responsebuf,strlen(responsebuf));
+		}while(ret < 0 && EINTR == errno);
+
+		if((strlen(buf)>strlen(SERV_RESP_STR))
+			&& (!strncasecmp(buf+strlen(SERV_RESP_STR),QUIT_STR,strlen(QUIT_STR)))){
 			printf("client(fd=%d) is existing!\n",newfd);
 			break;
 		}
@@ -99,41 +111,33 @@ int main(){
 		pthread_create(&thread,NULL,(void*)&client_data_handle,(void*)&newfd);
 	}
 #else
-	pid_t pid=-1;
+
 	signal(SIGCHLD,sig_child_handler);
 	while(1){
-		printf("hello1\n");
 		struct sockaddr_in cin;
-		printf("hello2\n");
 		socklen_t addrlen = sizeof(cin);
-		printf("hello3\n");
 		if((newfd = accept(fd,(struct sockaddr*)&cin,&addrlen))<0){
 			perror("accept");
 			exit(-1);
 		}
-		printf("hello4\n");
+		pid_t pid;
 		if(pid=fork()<0){
 			perror("fork");
-			printf("hello5");
 			exit(-1);
 		}
-		printf("%d",getpid());
-		if(pid==0){
-			printf("%d",getpid());
-			printf("hello7");
-				close(fd);
+		if(0 == pid){
+			close(fd);
 			char ipv4_addr[16];
 			if(!inet_ntop(AF_INET,(void*)&cin.sin_addr.s_addr,ipv4_addr,sizeof(sin))){
 				perror("inet_ntop");
 				exit(-1);
 			}
 
-			printf("Client (%s:%d) is connected!\n",ipv4_addr,ntohs(cin.sin_port));
+			printf("Client(%s:%d) is connect !\n",ipv4_addr,cin.sin_port);
 			client_data_handle(&newfd);
 			exit(0);
 		}
 		else{
-			printf("%d",getpid());
 			close(newfd);
 		}
 	}

@@ -38,16 +38,19 @@ int main(){
 
 	// socket 
 	int fd = -1;
-	if((fd = socket(AF_INET,SOCK_STREAM,0))<0){
+	if((fd = socket(AF_LOCAL,SOCK_STREAM,0))<0){
 		perror("socket");
 		exit(-1);
 	}
 	
+	int b_reuse = 1 ;
+	setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,&b_reuse,sizeof(int));
+
+#if 0
 	struct sockaddr_in sin;
 	bzero(&sin,sizeof(sin));
 	sin.sin_port	 =	 htons(SERV_PORT);
 	sin.sin_family	 =	 AF_INET;
-#if 0
 	// inet_addr only for IPV4
 	sin.sin_addr.s_addr 	=	inet_addr(SERV_IP_ADDR);
 	// inet_pton() for IPV4 and IPV6
@@ -55,12 +58,21 @@ int main(){
 		perror("inet_pton");
 		exit(-1);
 	}
-#else 
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	// all local IP	
-#endif
+#else
+	struct sockaddr_un sun;
+	bzero(sun,sizeof(sun));
+	sun.sun_family = AF_LOCAL;
+
+	if(access(UNIX_DOMAIN_FILE,F_OK)){
+		unlink(UNIX_DOMAIN_FILE);
+	}
+	strncpy(sun.sun_path,UNIX_DOMAIN_FILE,strlen(UNIX_DOMAIN_FILE));
 	
-	if(bind(fd,(struct sockaddr*)&sin,sizeof(sin))<0){
+#endif 
+	
+	if(bind(fd,(struct sockaddr*)&sun,sizeof(sun))<0){
 		perror("bind");
 		exit(-1);
 	}
@@ -102,12 +114,7 @@ int main(){
 	pid_t pid=-1;
 	signal(SIGCHLD,sig_child_handler);
 	while(1){
-		printf("hello1\n");
-		struct sockaddr_in cin;
-		printf("hello2\n");
-		socklen_t addrlen = sizeof(cin);
-		printf("hello3\n");
-		if((newfd = accept(fd,(struct sockaddr*)&cin,&addrlen))<0){
+		if(newfd=accept(fd,NULL,NULL)<0){
 			perror("accept");
 			exit(-1);
 		}
